@@ -1,19 +1,19 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TestAPI.Dto;
-using TestAPI.Repository;
+using TestAPI.Interfaces;
 
 namespace TestAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1")]
     [ApiController]
-    public class StudentController : ControllerBase
+    [ApiVersion("1.0")]
+    public class StudentV1Controller : ControllerBase
     {
-        private readonly StudentRepository _repository;
+        private readonly IStudentInterface _repository;
         private readonly IMapper _mapper;
 
-        public StudentController(StudentRepository repository, IMapper mapper)
+        public StudentV1Controller(IStudentInterface repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
@@ -63,6 +63,14 @@ namespace TestAPI.Controllers
             var courses = await _repository.GetCoursesByStudentIdAsync(studentId);
             if (courses != null && courses.Count() == 0) return NotFound(new { Message = "No Courses Found!", StatusCode = 400 });
             return Ok(_mapper.Map<List<CourseDto>>(courses));
+        }
+
+        [HttpGet("FindByIdAndName")]
+        public async Task<ActionResult<StudentDto>> GetStudentByIdAndName([FromQuery] int id=1, [FromQuery] string name = "value")
+        {
+            var studentDto = await _repository.GetStudentByIdAndName(id, name);
+            if (studentDto.StudentName == null) return NotFound($"Student Not Found id: {id}, name: {name}");
+            return Ok(studentDto);
         }
     }
 }

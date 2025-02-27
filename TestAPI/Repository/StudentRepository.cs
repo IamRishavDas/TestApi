@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TestAPI.Data;
 using TestAPI.Dto;
@@ -11,10 +12,12 @@ namespace TestAPI.Repository
     {
 
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public StudentRepository(ApplicationDbContext context)
+        public StudentRepository(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<StudentModel> AddStudentAsync(StudentDto studentDto)
@@ -77,6 +80,15 @@ namespace TestAPI.Repository
             return courses;
         }
 
+        public async Task<StudentDto> GetStudentByIdAndName(int studentId, string studentName)
+        {
+            var studentWithMatchId = await _context.Students.FindAsync(studentId);
+            if (studentWithMatchId == null) return new StudentDto();
+            var studentWithMatchIdAndName = studentWithMatchId.StudentName.ToLower().Equals(studentName.ToLower()) ? _mapper.Map<StudentDto>(studentWithMatchId) : new StudentDto();
+            if (studentWithMatchIdAndName == null) return new StudentDto();
+            return studentWithMatchIdAndName;
+        }
+
         public async Task<StudentModel> GetStudentByIdAsync(int studentId)
         {
             var student =  await _context.Students.FindAsync(studentId);
@@ -105,8 +117,8 @@ namespace TestAPI.Repository
                     student.StudentName = studentDto.StudentName;
                     student.StudentRoll = studentDto.StudentRoll;
                     _context.Students.Update(student);
-                    await _context.SaveChangesAsync();
-                    return student;
+                    int rowsAffected = await _context.SaveChangesAsync();
+                    if(rowsAffected > 0) return student;
                 }
             }
             return new StudentModel();

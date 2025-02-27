@@ -12,6 +12,6 @@ namespace TestAPI.Interfaces
         Task<StudentModel> UpdateStudentByIdAsync(int studentId, StudentDto studentDto);
         Task<bool> IsStudentExistAsync(int studentId);
         Task<ICollection<CourseDto>> GetCoursesByStudentIdAsync(int studentId);
-        
+        Task<StudentDto> GetStudentByIdAndName(int studentId, string studentName);
     }
 }
